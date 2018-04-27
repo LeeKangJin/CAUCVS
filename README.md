@@ -1,4 +1,5 @@
-#편의점 간식(도시락, 햄버거, 삼각김밥, 핫바) 를 인식하여
-#편의점 전자레인지의 최적시간을 제공하는 프로그램입니다.
-#Open Source 규정을 따릅니다.
+CAU Capston Design CAUCVS Team git repository
 
+Our Data and Code.
+
+#CAUCVS
