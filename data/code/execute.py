@@ -4,4 +4,4 @@ import sys
 
 input_image_name = sys.argv[1]
 
-predict.predict("./workspace"+"input_image_name)
+predict.predict("./workspace"+input_image_name+".jpg")
