@@ -8,7 +8,8 @@ from time import sleep
 serverPort = 5163
 serverSocket = socket(AF_INET, SOCK_STREAM)
 connectionSocket = socket()
-fileName = 'image.jpg'
+numOfClient = 1
+rt = 10
 
 def serverOpen(serverPort):
     serverSocket.bind(('', serverPort))
@@ -17,6 +18,7 @@ def serverOpen(serverPort):
 
 def receiveData(fileName, connectionSocket):
     wattCheck = connectionSocket.recv(1).decode()
+    ct = connectionSocket.recv(3).decode()
     if wattCheck == '7':
         print('Power consumption : 700watt')
     elif wattCheck == '1':
@@ -30,11 +32,10 @@ def receiveData(fileName, connectionSocket):
         data = connectionSocket.recv(1024)
     f.close()
     print("Image file received done")
-    return wattCheck
+    return wattCheck, int(ct)
 
 def imageRecognition(fileName):
     foodCategory = predict.predict(fileName)
-    print("foodCategory : %s" % foodCategory )
     return foodCategory
 
 def matchDB(foodCategory, wattCheck):
@@ -46,16 +47,35 @@ def matchDB(foodCategory, wattCheck):
         sql = "select OperationTime1000 from CVSFood where FoodCategory = ?"
     cur.execute(sql, (foodCategory,))
     operationTime = cur.fetchone()
-    return operationTime[0]
+    sql = "select TargetTemperature from CVSFood where FoodCategory = ?"
+    cur.execute(sql, (foodCategory,))
+    tt = cur.fetchone()
+    return int(operationTime[0]), int(tt[0])
+
+def changeTimeFormat(operationTime):
+    min = int(operationTime / 60)
+    sec = int(operationTime - min * 60)
+    min = str(min)
+    if sec == 0:
+        sec = '00'
+    else:
+        sec = str(sec)
+    changedOperationTime = min + ':' + sec
+    return changedOperationTime
 
 def sendData(operationTime, connectionSocket):
     connectionSocket.send(operationTime.encode())
 
 def handler(connectionSocket):
+    global numOfClient
+    fileName = 'image'+  str(numOfClient) + '.jpg'
+    numOfClient += 1
     while connectionSocket.fileno() != -1:
-        wattCheck = receiveData(fileName, connectionSocket)
+        (wattCheck, ct) = receiveData(fileName, connectionSocket)
         foodCategory = imageRecognition(fileName)
-        operationTime = matchDB(foodCategory, wattCheck)
+        (operationTime, tt) = matchDB(foodCategory, wattCheck)
+        operationTime = operationTime * ((tt - ct)/(tt - rt))
+        operationTime = changeTimeFormat(operationTime)
         message = foodCategory + ' ' + operationTime
         sendData(message, connectionSocket)
 
@@ -75,3 +95,5 @@ while True:
         sys.exit(0)
 
     #connectionSocket.close()
+
+
