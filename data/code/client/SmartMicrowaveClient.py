@@ -53,13 +53,16 @@ def capture(fileName):
                     break
             
 def getTemperature():
+    ser.write("GET".encode());
     temperature_read = ser.readline().decode()
     temperature = int(temperature_read)
     print('Temperature : %d degree' % temperature)
-    if temperature >= 0:
-        temperature_str = '+' + '%2d' % temperature
+    if temperature > 0:
+        temperature_str = '+' + '%.2d' % temperature
+    elif temperature == 0:
+        temperature_str = '+00'
     else:
-        temperature_str = '-' + '%2d' % temperature
+        temperature_str = '-' + '%.2d' % temperature
     return temperature_str
 
 
