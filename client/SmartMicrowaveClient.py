@@ -5,6 +5,7 @@ import picamera
 from time import sleep
 import RPi.GPIO as GPIO
 import lcd_i2c as lcd
+import serial
 
 serverName = '165.194.17.15'
 serverPort = 5163
@@ -14,12 +15,15 @@ buttonLeft = 5
 buttonRight = 6
 myWatt = '700'
 #myWatt = '1000'
+ser = serial.Serial("/dev/ttyACM0", 9600)
 
 def initialize():
+    global ser
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(5, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(6, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     lcd.lcd_init()
+    ser.baudrate = 9600
 
 def connect(serverName, serverPort):
     clientSocket.connect((serverName, serverPort))
@@ -48,14 +52,28 @@ def capture(fileName):
                     printFirstScreen()
                     break
             
-            
+def getTemperature():
+    ser.write("GET".encode());
+    temperature_read = ser.readline().decode()
+    temperature = int(temperature_read)
+    print('Temperature : %d degree' % temperature)
+    if temperature > 0:
+        temperature_str = '+' + '%.2d' % temperature
+    elif temperature == 0:
+        temperature_str = '+00'
+    else:
+        temperature_str = '-' + '%.2d' % temperature
+    return temperature_str
 
-def sendData(fileName):
+
+def sendData(fileName, temperature):
     f = open(fileName, 'rb')
     print("Transferring Image...")
     data = f.read(1024)
     myWattEncoded = myWatt[0].encode()
+    temperatureEncoded = temperature.encode()
     clientSocket.send(myWattEncoded)
+    clientSocket.send(temperatureEncoded)
     while data:
         clientSocket.send(data)
         data = f.read(1024)
@@ -100,7 +118,8 @@ while True:
     try:
         printFirstScreen()
         capture(fileName)
-        sendData(fileName)
+        temperature = getTemperature()
+        sendData(fileName, temperature)
         result = receiveData()
         displayOperationTime(result)
 
