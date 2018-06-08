@@ -3,13 +3,12 @@ from threading import *
 import sys
 import sqlite3
 import predict
-from time import sleep
 
 serverPort = 5163
 serverSocket = socket(AF_INET, SOCK_STREAM)
 connectionSocket = socket()
 numOfClient = 1
-rt = 10
+rt = 18
 
 def serverOpen(serverPort):
     serverSocket.bind(('', serverPort))
@@ -94,6 +93,5 @@ while True:
         serverSocket.close()
         sys.exit(0)
 
-    #connectionSocket.close()
-
+    
 
